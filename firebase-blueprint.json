@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "Node": {
+      "title": "Node",
+      "description": "A hierarchical node in the tree structure (folder or note).",
+      "type": "object",
+      "properties": {
+        "parentId": {
+          "type": "string",
+          "description": "The ID of the parent node, or null for root."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the node."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["folder", "note"],
+          "description": "Whether the node is a folder or a note."
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order of the node among its siblings."
+        },
+        "content": {
+          "type": "string",
+          "description": "The rich text content of the note (empty for folders)."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this node."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the node was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the node was last updated."
+        }
+      },
+      "required": ["name", "type", "ownerId", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/nodes/{nodeId}": {
+      "schema": "Node",
+      "description": "Collection of all hierarchical nodes."
+    }
+  }
+}

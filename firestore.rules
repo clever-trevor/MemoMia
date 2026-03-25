@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: nodes
+    // Document ID: nodeId
+    // Fields:
+    //   - parentId: string | null (optional)
+    //   - name: string (required, 1-100 chars)
+    //   - type: string (required, 'folder' | 'note')
+    //   - content: string (optional, rich text content)
+    //   - ownerId: string (required, must match auth.uid)
+    //   - createdAt: timestamp (required)
+    //   - updatedAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.ownerId;
+    }
+
+    function isValidNode(data) {
+      return data.keys().hasAll(['name', 'type', 'ownerId', 'createdAt', 'updatedAt', 'order']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.type in ['folder', 'note'] &&
+             data.order is number &&
+             data.ownerId == request.auth.uid &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (!('parentId' in data) || data.parentId == null || data.parentId is string) &&
+             (!('content' in data) || data.content is string);
+    }
+
+    match /nodes/{nodeId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidNode(request.resource.data);
+      allow update: if isDocOwner() && isValidNode(request.resource.data) &&
+                      request.resource.data.ownerId == resource.data.ownerId &&
+                      request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+  }
+}

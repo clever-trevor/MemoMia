@@ -1,0 +1,5 @@
+{
+  "name": "MemoMia",
+  "description": "A hierarchical note-taking application with a directory tree structure and rich text editing.",
+  "requestFramePermissions": []
+}
