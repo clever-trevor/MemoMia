@@ -332,7 +332,7 @@ const TreeItem = ({
         return false;
       };
       
-      if (isDescendant(node.id, selectedNodeId)) {
+      if (isDescendant(node.id, selectedNodeId) || node.id === selectedNodeId) {
         setIsOpen(true);
       }
     }
@@ -365,8 +365,26 @@ const TreeItem = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', node.id);
     e.dataTransfer.setData('nodeId', node.id);
     e.dataTransfer.effectAllowed = 'move';
+    
+    // Set a transparent drag image to let the polyfill handle it or just to satisfy the browser
+    if (e.dataTransfer.setDragImage) {
+      const img = new Image();
+      img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      e.dataTransfer.setDragImage(img, 0, 0);
+    }
+
+    // Set dragging attribute for mobile polyfill and CSS
+    e.currentTarget.setAttribute('data-dragging', 'true');
+    // Add a class for visual feedback
+    e.currentTarget.classList.add('dragging');
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.currentTarget.removeAttribute('data-dragging');
+    e.currentTarget.classList.remove('dragging');
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -383,7 +401,7 @@ const TreeItem = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    const draggedNodeId = e.dataTransfer.getData('nodeId');
+    const draggedNodeId = e.dataTransfer.getData('nodeId') || e.dataTransfer.getData('text/plain');
     if (draggedNodeId && draggedNodeId !== node.id) {
       // If dropping onto a folder, move inside. If onto a note, move to same parent.
       const newParentId = node.type === 'folder' ? node.id : node.parentId;
@@ -405,6 +423,7 @@ const TreeItem = ({
       <div 
         draggable
         onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -415,7 +434,11 @@ const TreeItem = ({
         style={{ 
           paddingLeft: `${level * 12 + 8}px`,
           backgroundColor: selectedNodeId === node.id ? 'var(--hover-bg)' : undefined,
-          color: selectedNodeId === node.id ? 'var(--text-primary)' : 'var(--text-secondary)'
+          color: selectedNodeId === node.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+          touchAction: 'none',
+          WebkitUserSelect: 'none',
+          userSelect: 'none',
+          WebkitTouchCallout: 'none'
         }}
         onClick={() => {
           onSelectNode(node.id);
@@ -454,6 +477,7 @@ const TreeItem = ({
             style={{ backgroundColor: 'var(--bg-main)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
+            onFocus={(e) => e.target.select()}
             onBlur={handleRename}
             onKeyDown={(e) => e.key === 'Enter' && handleRename()}
             onClick={(e) => e.stopPropagation()}
@@ -463,24 +487,6 @@ const TreeItem = ({
         )}
 
         <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-          {node.type === 'folder' && (
-            <>
-              <button 
-                onClick={(e) => { e.stopPropagation(); onCreateNode(node.id, 'folder'); setIsOpen(true); }}
-                className="p-1 hover:bg-zinc-200 rounded hidden sm:block"
-                title="New Folder"
-              >
-                <FolderPlus size={14} />
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); onCreateNode(node.id, 'note'); setIsOpen(true); }}
-                className="p-1 hover:bg-zinc-200 rounded hidden sm:block"
-                title="New Note"
-              >
-                <FilePlus size={14} />
-              </button>
-            </>
-          )}
           <div className="relative">
             <button 
               onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
@@ -503,6 +509,33 @@ const TreeItem = ({
                 >
                   <Edit2 size={12} /> Rename
                 </button>
+                
+                <div className="h-px my-1" style={{ backgroundColor: 'var(--border-color)' }} />
+                
+                {node.type === 'folder' && (
+                  <>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onCreateNode(node.id, 'folder'); setIsOpen(true); setShowMenu(false); }}
+                      className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 transition-colors"
+                      style={{ color: 'var(--text-primary)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <FolderPlus size={12} /> New Subfolder
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onCreateNode(node.id, 'note'); setIsOpen(true); setShowMenu(false); }}
+                      className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 transition-colors"
+                      style={{ color: 'var(--text-primary)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <FilePlus size={12} /> New Note
+                    </button>
+                    <div className="h-px my-1" style={{ backgroundColor: 'var(--border-color)' }} />
+                  </>
+                )}
+
                 <button 
                   onClick={(e) => { e.stopPropagation(); setShowAppearanceModal(true); setShowMenu(false); }}
                   className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 transition-colors"
@@ -641,22 +674,6 @@ export default function Sidebar({
             >
               <SettingsIcon size={18} />
             </button>
-            <button 
-              onClick={() => onCreateNode(null, 'folder')}
-              className="p-1.5 hover:bg-zinc-200 rounded-md transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-              title="New Root Folder"
-            >
-              <FolderPlus size={18} />
-            </button>
-            <button 
-              onClick={() => onCreateNode(null, 'note')}
-              className="p-1.5 hover:bg-zinc-200 rounded-md transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-              title="New Root Note"
-            >
-              <FilePlus size={18} />
-            </button>
           </div>
         </div>
         
@@ -671,6 +688,21 @@ export default function Sidebar({
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+
+        <button 
+          onClick={() => onCreateNode(null, 'folder')}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all border border-dashed hover:border-solid group"
+          style={{ 
+            backgroundColor: 'var(--bg-main)', 
+            borderColor: 'var(--border-color)', 
+            color: 'var(--text-primary)' 
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
+        >
+          <FolderPlus size={16} className="transition-transform group-hover:scale-110" style={{ color: 'var(--accent-color)' }} />
+          <span>New Folder</span>
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">

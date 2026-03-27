@@ -1,4 +1,21 @@
 @import "tailwindcss";
+@import "mobile-drag-drop/default.css";
+
+/* Mobile Drag Drop Polyfill Styles */
+.dnd-poly-drag-image {
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.dnd-poly-drag-icon {
+  display: none;
+}
+
+.dragging {
+  opacity: 0.5;
+  background-color: var(--hover-bg);
+}
 
 @theme {
   --font-serif: "Georgia", serif;
