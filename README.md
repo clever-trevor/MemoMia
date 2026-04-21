@@ -1,4 +1,4 @@
-[MemoMia!](https://raw.githubusercontent.com/clever-trevor/MemoMia/a979c97a7df886f2a7c68c93491edaf02ec539a9/MemoMia-25.png)
+![MemoMia!](https://raw.githubusercontent.com/clever-trevor/MemoMia/a979c97a7df886f2a7c68c93491edaf02ec539a9/MemoMia-25.png)
 
 # MemoMia!
 A simple note taking app with a folder structure and unlimited nesting.
