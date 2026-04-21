@@ -1,6 +1,4 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="[[https://github.com/user-attachments/assets/0aa](https://raw.githubusercontent.com/clever-trevor/MemoMia/a979c97a7df886f2a7c68c93491edaf02ec539a9/MemoMia-25.png)]([https://storage.googleapis.com/aistudio-images/MemoMia-25.png](https://raw.githubusercontent.com/clever-trevor/MemoMia/a979c97a7df886f2a7c68c93491edaf02ec539a9/MemoMia-25.png))" />
-</div>
+[](https://raw.githubusercontent.com/clever-trevor/MemoMia/a979c97a7df886f2a7c68c93491edaf02ec539a9/MemoMia-25.png)
 
 # MemoMia!
 A simple note taking app with a folder structure and unlimited nesting.
